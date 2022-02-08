@@ -772,12 +772,14 @@ def OutputHlsIframeIndex(options, track, all_tracks, media_subdir, iframes_playl
     iframe_max_bitrate = 0
     iframe_average_segment_bitrate = 0
 
+    # When using segment durations to determine max iframe bitrate, skip the last segment since it can be
+    # very short (even 1 frame), which results in an invalid iframe_max_bitrate calculation.
     if not options.split:
         # get the I-frame index for a single file
         json_index = Mp4IframeIndex(options, path.join(options.output_dir, media_file_name))
         index = json.loads(json_index)
-        for i in range(len(track.segment_durations)):
-            if i < len(index):
+        for i in range(len(track.segment_durations)-1):
+            if i < len(index)-1:
                 index_entry = index[i]
                 iframe_segment_duration = track.segment_durations[i]
                 index_playlist_file.write('#EXTINF:{},\n'.format(iframe_segment_duration))
@@ -796,7 +798,7 @@ def OutputHlsIframeIndex(options, track, all_tracks, media_subdir, iframes_playl
                 index_playlist_file.write(media_file_name+'\n')
     else:
         segment_pattern = SEGMENT_PATTERN.replace('ll','')
-        for i in range(len(track.segment_durations)):
+        for i in range(len(track.segment_durations)-1):
             fragment_basename = segment_pattern % (i+1)
             fragment_file = path.join(options.output_dir, media_subdir, fragment_basename)
             init_file = path.join(options.output_dir, media_subdir, options.init_segment)
