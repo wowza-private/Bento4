@@ -685,7 +685,7 @@ def ComputeHlsFairplayKeyLine(options):
 
 #############################################
 def OutputHlsCommon(options, track, all_tracks, media_subdir, playlist_name, media_file_name):
-    hls_target_duration = math.ceil(max(track.segment_durations))
+    hls_target_duration = round(max(track.segment_durations))
 
     output_dir = path.join(options.output_dir, media_subdir)
     os.makedirs(output_dir, exist_ok = True)
@@ -1959,29 +1959,6 @@ def main():
 
     # parse media sources syntax
     media_sources = [MediaSource(options, source) for source in args]
-
-    # for on-demand, we need to first extract tracks into individual media files
-    if options.on_demand:
-        (audio_sets, video_sets, subtitles_sets, mp4_files) = SelectTracks(options, media_sources)
-        media_sources = [x for x in media_sources if x.format == "webvtt"] # Keep subtitles
-        for track in sum(list(audio_sets.values()) + list(video_sets.values()), []):
-            print('Extracting track', track.id, 'from', GetMappedFileName(track.parent.media_source.filename))
-            track_file = tempfile.NamedTemporaryFile(dir=options.output_dir, delete=False)
-            TempFiles.append(track_file.name)
-            track_file.close() # necessary on Windows
-            MapFileName(track_file.name, path.basename(track_file.name) + ' = Extracted[track '+str(track.id) + ' from '+GetMappedFileName(track.parent.media_source.filename)+']')
-
-            Mp4Fragment(options,
-                        track.parent.media_source.filename,
-                        track_file.name,
-                        track = str(track.id),
-                        index = True,
-                        copy_udta = True,
-                        quiet = True)
-
-            media_source = MediaSource(options, track_file.name)
-            media_source.spec = track.parent.media_source.spec
-            media_sources.append(media_source)
 
     # compute the KID(s) and encryption key(s)
     if options.encryption_key:
