@@ -778,8 +778,8 @@ def OutputHlsIframeIndex(options, track, all_tracks, media_subdir, iframes_playl
         # get the I-frame index for a single file
         json_index = Mp4IframeIndex(options, path.join(options.output_dir, media_file_name))
         index = json.loads(json_index)
-        for i in range(len(track.segment_durations)-1):
-            if i < len(index)-1:
+        for i in range(len(track.segment_durations)):
+            if i < len(index):
                 index_entry = index[i]
                 iframe_segment_duration = track.segment_durations[i]
                 index_playlist_file.write('#EXTINF:{},\n'.format(iframe_segment_duration))
@@ -787,18 +787,19 @@ def OutputHlsIframeIndex(options, track, all_tracks, media_subdir, iframes_playl
                 iframe_offset     = int(index_entry['offset'])
                 iframe_size       = int(index_entry['size'])
 
-                iframe_total_segment_size += iframe_size
-                iframe_total_segment_duration += iframe_segment_duration
-                iframe_bitrate = 8.0*(iframe_size/iframe_segment_duration)
-                if iframe_bitrate > iframe_max_bitrate:
-                    iframe_max_bitrate = iframe_bitrate
+                if i < len(track.segment_durations)-1:
+                    iframe_total_segment_size += iframe_size
+                    iframe_total_segment_duration += iframe_segment_duration
+                    iframe_bitrate = 8.0*(iframe_size/iframe_segment_duration)
+                    if iframe_bitrate > iframe_max_bitrate:
+                        iframe_max_bitrate = iframe_bitrate
 
                 iframe_range_size = iframe_size + (iframe_offset-fragment_start)
                 index_playlist_file.write('#EXT-X-BYTERANGE:{}@{}\n'.format(iframe_range_size, fragment_start))
                 index_playlist_file.write(media_file_name+'\n')
     else:
         segment_pattern = SEGMENT_PATTERN.replace('ll','')
-        for i in range(len(track.segment_durations)-1):
+        for i in range(len(track.segment_durations)):
             fragment_basename = segment_pattern % (i+1)
             fragment_file = path.join(options.output_dir, media_subdir, fragment_basename)
             init_file = path.join(options.output_dir, media_subdir, options.init_segment)
@@ -816,12 +817,12 @@ def OutputHlsIframeIndex(options, track, all_tracks, media_subdir, iframes_playl
             index_playlist_file.write('#EXT-X-BYTERANGE:{}@0\n'.format(iframe_range_size))
             index_playlist_file.write(fragment_basename+'\n')
 
-            iframe_total_segment_size += iframe_size
-            iframe_total_segment_duration += iframe_segment_duration
-
-            iframe_bitrate = 8.0*(iframe_size/iframe_segment_duration)
-            if iframe_bitrate > iframe_max_bitrate:
-                iframe_max_bitrate = iframe_bitrate
+            if i < len(track.segment_durations)-1:
+                iframe_total_segment_size += iframe_size
+                iframe_total_segment_duration += iframe_segment_duration
+                iframe_bitrate = 8.0*(iframe_size/iframe_segment_duration)
+                if iframe_bitrate > iframe_max_bitrate:
+                    iframe_max_bitrate = iframe_bitrate
 
     index_playlist_file.write('#EXT-X-ENDLIST\n')
 
