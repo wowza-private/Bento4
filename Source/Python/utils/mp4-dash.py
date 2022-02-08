@@ -913,13 +913,20 @@ def OutputHls(options, set_attributes, audio_sets, video_sets, subtitles_sets, s
                 default = not default_selected
             if default:
                 default_selected = True
+
+            sample_description = audio_track.info['sample_descriptions'][0]
+            if 'mpeg_4_audio_decoder_config' in sample_description:
+                audio_channel_config_value = str(sample_description['mpeg_4_audio_decoder_config']['channels'])
+            else:
+                audio_channel_config_value = str(audio_track.channels)
+
             master_playlist_file.write('#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="{}",LANGUAGE="{}",NAME="{}",AUTOSELECT={},DEFAULT={},CHANNELS="{}",URI="{}"\n'.format(
                                        audio_group_name,
                                        audio_track.language,
                                        media_name,
                                        'YES' if audio_track.hls_autoselect else 'NO',
                                        'YES' if default else 'NO',
-                                       audio_track.channels,
+                                       audio_channel_config_value,
                                        media_playlist_path))
             OutputHlsTrack(options, audio_track, all_audio_tracks + all_video_tracks, media_subdir, media_playlist_name, media_file_name)
 
